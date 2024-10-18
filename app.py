@@ -33,7 +33,7 @@ df_pandas['Регион'] = df_pandas['Страна'].apply(lambda x: 'Цент�
 
 
 countries = df_pandas['Страна'].unique().tolist()
-regions = ['Центральная Азия'] + countries 
+regions = ['Центральная Азия'] + countries  
 selected_regions = st.multiselect("Выберите страны или регион для отображения:", regions, default=regions)
 
 
@@ -60,20 +60,20 @@ filtered_data = df_pandas[(df_pandas['Регион'].isin(selected_regions)) &
 
 
 if not filtered_data.empty:
-   
+
     if 'Центральная Азия' in selected_regions:
-        central_asia_data = filtered_data[filtered_data['Регион'] == 'Центральная Азия'].groupby('year').mean().reset_index()
+        central_asia_data = filtered_data.groupby('year').mean().reset_index()
         central_asia_data['Страна'] = 'Центральная Азия'
-        filtered_data = pd.concat([filtered_data, central_asia_data])
+        filtered_data = pd.concat([filtered_data, central_asia_data], ignore_index=True)
 
 
     st.write("Статистика по выбранным данным:")
     stats = filtered_data.groupby('Страна')[selected_metric].agg(['mean', 'min', 'max']).reset_index()
-    stats.columns = ['Страна', 'Среднее', 'Минимум', 'Максимум']  #
+    stats.columns = ['Страна', 'Среднее', 'Минимум', 'Максимум']  
     st.write(stats)
 
 
-    plt.style.use('ggplot') 
+    plt.style.use('ggplot')  
 
 
     tab1, tab2 = st.tabs(["Линейный график", "Столбчатая диаграмма"])
