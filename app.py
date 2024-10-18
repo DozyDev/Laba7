@@ -3,19 +3,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pydeck as pdk
-import plotly.express as px  # Для анимаций
+import plotly.express as px  
 
-# Настройка стиля
 st.set_page_config(page_title="Статистика Центральной Азии", layout="wide")
 
-# Заголовок приложения
+
 st.title("Анализ статистики Центральной Азии")
 
-# Загрузка данных
+
 file_path = "CentralAsia.xlsx"  
 df_pandas = pd.read_excel(file_path)
 
-# Обработка данных
+
 df_pandas[['country', 'year']] = df_pandas['year'].str.split('_', expand=True)
 df_pandas['year'] = pd.to_numeric(df_pandas['year'])
 
@@ -29,15 +28,15 @@ country_mapping = {
 df_pandas['country'] = df_pandas['country'].replace(country_mapping)
 df_pandas = df_pandas.rename(columns={'country': 'Страна'})
 
-# Выбор стран
+
 countries = df_pandas['Страна'].unique().tolist()
 selected_countries = st.multiselect("Выберите страны для отображения:", countries, default=countries)
 
-# Выбор диапазона лет
+
 year_range = st.slider("Выберите диапазон лет:", min_value=int(df_pandas['year'].min()), 
                         max_value=int(df_pandas['year'].max()), value=(2014, 2017))
 
-# Выбор метрики
+
 metrics_mapping = {
     'F_mod_sev_ad': 'Модиф. тяжесть прод. безоп. среди взросл.',
     'F_sev_ad': 'Тяжесть прод. безоп. среди взросл.',
@@ -50,25 +49,25 @@ metrics_mapping = {
 metrics = list(metrics_mapping.keys())
 selected_metric = st.selectbox("Выберите показатель для визуализации:", metrics, format_func=lambda x: metrics_mapping[x])
 
-# Фильтрация данных
+
 filtered_data = df_pandas[(df_pandas['Страна'].isin(selected_countries)) & 
                            (df_pandas['year'].between(year_range[0], year_range[1]))]
 
 if not filtered_data.empty:
-    # Вычисление средней тяжести
+   
     average_severity = filtered_data[selected_metric].mean()
     st.metric(label="Средняя тяжесть", value=f"{average_severity:.2f}")
 
-    # Статистика по данным
+   
     st.write("Статистика по выбранным данным:")
     stats = filtered_data.groupby('Страна')[selected_metric].agg(['mean', 'min', 'max']).reset_index()
     stats.columns = ['Страна', 'Среднее', 'Минимум', 'Максимум']  
     st.write(stats)
 
-    # Настройка стиля графиков
+    
     plt.style.use('ggplot')
 
-    # Разделение на вкладки
+    
     tab1, tab2, tab3, tab4 = st.tabs(["Линейный график", "Столбчатая диаграмма", "Ящичный график", "Тепловая карта"])
 
     with tab1:
@@ -117,9 +116,9 @@ if not filtered_data.empty:
         plt.tight_layout()
         st.pyplot(plt)
 
-    # Анимированный график с использованием Plotly
+   
     st.write("Анимированный график изменения {} по годам.".format(metrics_mapping[selected_metric]))
-    # Использование 'year' как столбца для анимации
+  
     fig = px.line(filtered_data, x='year', y=selected_metric, color='Страна', 
                   title='Анимированный график изменения {} по годам'.format(metrics_mapping[selected_metric]), 
                   animation_frame='year', 
@@ -127,13 +126,13 @@ if not filtered_data.empty:
                   labels={'year': 'Год', selected_metric: metrics_mapping[selected_metric]})
     st.plotly_chart(fig, use_container_width=True)
 
-    # Карта с расположением стран с дополнительными данными
+    
     st.write("Карта с расположением стран:")
     map_data = pd.DataFrame({
         'Страна': ['Казахстан', 'Кыргызстан', 'Таджикистан', 'Узбекистан'],
         'Лат': [48.0196, 41.2044, 38.8610, 41.3775],
         'Лон': [66.9237, 74.7661, 74.5698, 64.5850],
-        'Метрика': [average_severity] * 4  # Добавление средней тяжести для отображения на карте
+        'Метрика': [average_severity] * 4  
     })
 
     st.pydeck_chart(pdk.Deck(
