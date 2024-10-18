@@ -69,7 +69,7 @@ if not filtered_data.empty:
     plt.style.use('ggplot')
 
     # Разделение на вкладки
-    tab1, tab2 = st.tabs(["Линейный график", "Столбчатая диаграмма"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Линейный график", "Столбчатая диаграмма", "Ящичный график", "Тепловая карта"])
 
     with tab1:
         st.write("График ниже показывает изменение {} по годам для выбранных стран.".format(metrics_mapping[selected_metric]))
@@ -97,19 +97,43 @@ if not filtered_data.empty:
         plt.legend(title='Страна', fontsize=10, title_fontsize=12, loc='upper right')
         st.pyplot(plt)
 
+    with tab3:
+        st.write("Ящичный график для отображения распределения {} по странам.".format(metrics_mapping[selected_metric]))
+        plt.figure(figsize=(12, 6))
+        sns.boxplot(data=filtered_data, x='Страна', y=selected_metric, palette='Set2')
+        plt.title('Распределение {} по странам'.format(metrics_mapping[selected_metric]), fontsize=16, weight='bold', color='darkblue')
+        plt.xlabel('Страна', fontsize=12, color='darkgreen')
+        plt.ylabel(metrics_mapping[selected_metric], fontsize=12, color='darkgreen')
+        plt.xticks(rotation=45, fontsize=10)
+        plt.tight_layout()
+        st.pyplot(plt)
+
+    with tab4:
+        st.write("Тепловая карта корреляций между метриками.")
+        corr = df_pandas[metrics].corr()
+        plt.figure(figsize=(12, 6))
+        sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5)
+        plt.title('Корреляция между метриками', fontsize=16, weight='bold', color='darkblue')
+        plt.tight_layout()
+        st.pyplot(plt)
+
     # Анимированный график с использованием Plotly
     st.write("Анимированный график изменения {} по годам.".format(metrics_mapping[selected_metric]))
+    # Использование 'year' как столбца для анимации
     fig = px.line(filtered_data, x='year', y=selected_metric, color='Страна', 
                   title='Анимированный график изменения {} по годам'.format(metrics_mapping[selected_metric]), 
-                  animation_frame='year', range_y=[0, filtered_data[selected_metric].max()])
-    st.plotly_chart(fig)
+                  animation_frame='year', 
+                  range_y=[filtered_data[selected_metric].min(), filtered_data[selected_metric].max()],
+                  labels={'year': 'Год', selected_metric: metrics_mapping[selected_metric]})
+    st.plotly_chart(fig, use_container_width=True)
 
-    # Карта с расположением стран
+    # Карта с расположением стран с дополнительными данными
     st.write("Карта с расположением стран:")
     map_data = pd.DataFrame({
         'Страна': ['Казахстан', 'Кыргызстан', 'Таджикистан', 'Узбекистан'],
         'Лат': [48.0196, 41.2044, 38.8610, 41.3775],
-        'Лон': [66.9237, 74.7661, 74.5698, 64.5850]
+        'Лон': [66.9237, 74.7661, 74.5698, 64.5850],
+        'Метрика': [average_severity] * 4  # Добавление средней тяжести для отображения на карте
     })
 
     st.pydeck_chart(pdk.Deck(
@@ -130,7 +154,7 @@ if not filtered_data.empty:
             ),
         ],
         tooltip={
-            "text": "{Страна}\n{Лат}, {Лон}"
+            "text": "{Страна}\nСредняя тяжесть: {Метрика:.2f}\n{Лат}, {Лон}"
         },
     ))
 else:
